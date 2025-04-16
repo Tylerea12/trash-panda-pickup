@@ -135,7 +135,7 @@ def create_room():
     session['room_id'] = room_id
 
     size = request.args.get("size", "medium")
-    time = int(request.args.get("time", 300))
+    time = game.time
     sizes = {'snack': 5, 'medium': 10, 'feast': 15}
     item_count = sizes.get(size, 10)
     selected_items = random.sample(TRASH_ITEMS, item_count)

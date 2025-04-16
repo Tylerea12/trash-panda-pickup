@@ -33,7 +33,7 @@
   <script>
     const socket = io();
 
- //   socket.emit('join_room', { room: "{{ game_id }}", username: "{{ username }}" });
+    socket.emit('join_room', { room: "{{ game_id }}", username: "{{ username }}" });
 
     const roomId = "{{ game_id }}";
     const playerName = "{{ username }}";
