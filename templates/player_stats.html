@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ player.username }}'s Stats</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    .stats-container {
+      max-width: 500px;
+      margin: 100px auto;
+      padding: 30px;
+      background: #fefefe;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stats-container h1 {
+      color: #2e7d32;
+      font-size: 2rem;
+    }
+    .stats-container p {
+      font-size: 1.2rem;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="stats-container">
+    <h1>🦝 {{ player.username }}</h1>
+    <p>🏆 Wins: <strong>{{ player.wins }}</strong></p>
+    <p>💥 Losses: <strong>{{ player.losses }}</strong></p>
+    <br>
+    <a href="/" class="button">⬅️ Back to Home</a>
+  </div>
+</body>
+</html>

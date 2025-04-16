@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trash Panda Pickup</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+  <h1>Trash Panda Pickup</h1>
+  <p>Tap each item as you collect it!</p>
+
+  <div id="timeDisplay"></div>
+
+  <div class="grid">
+    {% for item in items %}
+      {% set icon_filename = item.lower().replace(' ', '_') + '.png' %}
+      <div class="cell">
+        <img src="{{ url_for('static', filename='icons/' + icon_filename) }}" alt="{{ item }}" class="icon"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='icons/default.png') }}';">
+        <div class="label">{{ item }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <audio id="victorySound" src="{{ url_for('static', filename='sounds/victory.mp3') }}"></audio>
+  <audio id="loseSound" src="{{ url_for('static', filename='sounds/lose.mp3') }}"></audio>
+  <audio id="popSound" src="{{ url_for('static', filename='sounds/pop.mp3') }}"></audio>
+
+  <script>
+    const socket = io();
+    const roomId = "{{ game_id }}";
+    const playerName = "{{ username }}";
+    const totalTime = {{ time }};
+    let timeLeft = totalTime;
+    let timer;
+    let gameEnded = false;
+
+    const cells = document.querySelectorAll('.cell');
+    const popSound = document.getElementById("popSound");
+
+    cells.forEach(cell => {
+      cell.addEventListener('click', () => {
+        cell.classList.toggle('collected');
+        popSound.currentTime = 0;
+        popSound.play();
+        setTimeout(() => {
+          if ([...cells].every(c => c.classList.contains('collected'))) {
+            endGame();
+          }
+        }, 10);
+      });
+    });
+
+    function endGame() {
+      if (gameEnded) return;
+      gameEnded = true;
+      clearInterval(timer);
+
+      const victorySound = document.getElementById("victorySound");
+      victorySound.currentTime = 0;
+      victorySound.play();
+
+      let confettiDuration = 2000;
+      const end = Date.now() + confettiDuration;
+
+      const confettiInterval = setInterval(() => {
+        if (Date.now() > end) clearInterval(confettiInterval);
+        confetti({ particleCount: 25, spread: 70, origin: { y: Math.random() * 0.6 } });
+      }, 150);
+
+      socket.emit('player_won', { room: roomId, username: playerName });
+
+      setTimeout(() => {
+        fetch(`/api/player/${playerName}`)
+          .then(res => res.json())
+          .then(data => {
+            document.body.innerHTML = `
+              <h1 style="margin-top:100px;">🎉 You Win! Certified Trash Panda!</h1>
+              <p><strong>${data.username}</strong></p>
+              <div style="margin: 20px 0;">
+                🏆 Wins: <strong>${data.wins}</strong><br>
+                💥 Losses: <strong>${data.losses}</strong>
+              </div>
+              <a href="/" class="play-again-btn">🔁 Play Again</a>
+            `;
+          });
+      }, confettiDuration + 300);
+    }
+
+    socket.emit('join_room', { room: roomId });
+
+    socket.on('opponent_lost', () => {
+      if (!gameEnded) {
+        gameEnded = true;
+        clearInterval(timer);
+        document.getElementById("loseSound").play();
+
+        fetch(`/api/player/${playerName}`)
+          .then(res => res.json())
+          .then(data => {
+            document.body.innerHTML = `
+              <h1 style="margin-top:100px;">😢 You Lost!</h1>
+              <p><strong>${data.username}</strong></p>
+              <div style="margin: 20px 0;">
+                🏆 Wins: <strong>${data.wins}</strong><br>
+                💥 Losses: <strong>${data.losses}</strong>
+              </div>
+              <a href="/" class="play-again-btn">🔁 Try Again</a>
+            `;
+          });
+      }
+    });
+
+    if (totalTime > 0) {
+      const countdownEl = document.createElement("div");
+      countdownEl.id = "timeCountdown";
+      countdownEl.style.margin = "20px auto";
+      countdownEl.style.fontSize = "1.5rem";
+      document.body.insertBefore(countdownEl, document.querySelector(".grid"));
+
+      function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        countdownEl.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+
+      updateTimer();
+      timer = setInterval(() => {
+        if (!gameEnded) {
+          timeLeft--;
+          updateTimer();
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            document.getElementById("loseSound").play();
+            gameEnded = true;
+            document.body.innerHTML = `
+              <h1 style="margin-top:100px;">⏰ Time's Up! Better luck next time!</h1>
+              <a href="/" class="play-again-btn">🔁 Try Again</a>
+            `;
+          }
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

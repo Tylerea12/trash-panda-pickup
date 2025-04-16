@@ -1,0 +1,175 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f8f8f8;
+    padding: 40px;
+  }
+  
+  h1 {
+    color: #2e7d32;
+    font-size: 2.5rem;
+  }
+  
+  h2 {
+    margin-top: 40px;
+    color: #388e3c;
+  }
+  
+  p {
+    max-width: 700px;
+    margin: 0 auto 20px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+  
+  form {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  /* Game size buttons */
+  .size-options {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+  
+  .size-btn {
+    background-color: #e0e0e0;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 200px; /* 🔥 FORCE all buttons to exact same width */
+    text-align: center;
+  }
+  
+  
+  
+  .size-btn.selected {
+    background-color: #4caf50;
+    color: white;
+    border-color: #388e3c;
+  }
+  
+  /* Time selection */
+  .time-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  
+  .time-btn {
+    background-color: #e0e0e0;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .time-btn.selected {
+    background-color: #4caf50;
+    color: white;
+    border-color: #388e3c;
+  }
+  
+  input[type="range"] {
+    width: 80%;
+    margin: 10px auto;
+  }
+  
+  /* Game mode buttons */
+  .mode-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+  
+  .mode-btn {
+    background-color: #388e3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 18px 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .mode-btn:hover {
+    background-color: #2e7d32;
+  }
+  
+
+.cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    padding: 15px;
+    min-height: 140px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .cell:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .cell.collected {
+    background-color: #66bb6a;
+    color: white;
+    border-color: #388e3c;
+    text-decoration: line-through;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  
+  .play-again-btn {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 15px 30px;
+    background-color: #388e3c;
+    color: white;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+  
+  .play-again-btn:hover {
+    background-color: #2e7d32;
+  }
+
+  .icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin-bottom: 10px;
+  }
+
+  .label {
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  
