@@ -124,4 +124,5 @@ def handle_win(data):
     emit('opponent_lost', {}, room=room, include_self=False)
 
 if __name__ == '__main__':
-    socketio.run(flask_app, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(flask_app, host='0.0.0.0', port=port)
