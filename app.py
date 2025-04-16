@@ -141,7 +141,8 @@ def create_room():
     selected_items = random.sample(TRASH_ITEMS, item_count)
 
     if IS_PRODUCTION:
-        game = Game(id=game_id, player1_id=player.id, items=','.join(selected_items), time=time)
+        player = Player.query.filter_by(username=session["username"]).first()
+        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time)
         db.session.add(game)
         db.session.commit()
     else:
@@ -150,8 +151,7 @@ def create_room():
             "time": time
         }
 
-    invite_url = request.host_url + 'join/' + room_id
-    return render_template("waiting_room.html", room_id=room_id, invite_url=invite_url, username=session['username'])
+    return redirect(url_for("challenge_friend", room_id=room_id))
 
 @flask_app.route('/join/<room_id>')
 def join_room_view(room_id):
