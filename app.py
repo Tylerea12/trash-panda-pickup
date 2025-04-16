@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
+from flask import jsonify
 import uuid
 import random
 import os
@@ -27,6 +28,14 @@ class Game(db.Model):
     player2_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
     winner_id = db.Column(db.Integer, nullable=True)
     items = db.Column(db.Text)
+
+class ItemPickup(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    item = db.Column(db.String(50))
+    count = db.Column(db.Integer, default=0)
+
+    player = db.relationship("Player", backref="pickups")
 
 TRASH_ITEMS = [
     "bottle_cap",
@@ -104,6 +113,27 @@ def api_player_stats(username):
         'wins': player.wins,
         'losses': player.losses
     })
+
+@flask_app.route('/api/report-items', methods=['POST'])
+def report_items():
+    data = request.get_json()
+    username = data.get("username")
+    items = data.get("items", [])
+
+    player = Player.query.filter_by(username=username).first()
+    if not player:
+        return jsonify({"error": "Player not found"}), 404
+
+    for item in items:
+        record = ItemPickup.query.filter_by(player_id=player.id, item=item).first()
+        if record:
+            record.count += 1
+        else:
+            record = ItemPickup(player_id=player.id, item=item, count=1)
+            db.session.add(record)
+
+    db.session.commit()
+    return jsonify({"status": "ok"})
 
 @socketio.on('join_room')
 def handle_join(data):
