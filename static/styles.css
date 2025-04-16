@@ -3,173 +3,143 @@ body {
     text-align: center;
     background: #f8f8f8;
     padding: 40px;
+    margin: 0;
   }
   
   h1 {
     color: #2e7d32;
     font-size: 2.5rem;
-  }
-  
-  h2 {
-    margin-top: 40px;
-    color: #388e3c;
+    margin-bottom: 10px;
   }
   
   p {
-    max-width: 700px;
-    margin: 0 auto 20px;
-    font-size: 1.05rem;
+    max-width: 600px;
+    margin: 20px auto;
+    font-size: 1.1rem;
     line-height: 1.6;
   }
   
-  form {
-    max-width: 800px;
-    margin: 0 auto;
+  .section {
+    margin: 40px 0;
   }
   
-  /* Game size buttons */
-  .size-options {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
+  input[type="text"] {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 250px;
   }
   
-  .size-btn {
-    background-color: #e0e0e0;
-    border: 2px solid #ccc;
-    border-radius: 10px;
-    padding: 15px 20px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: 0.3s;
-    width: 200px; /* 🔥 FORCE all buttons to exact same width */
-    text-align: center;
-  }
-  
-  
-  
-  .size-btn.selected {
-    background-color: #4caf50;
-    color: white;
-    border-color: #388e3c;
-  }
-  
-  /* Time selection */
-  .time-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-  }
-  
-  .time-btn {
-    background-color: #e0e0e0;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  
-  .time-btn.selected {
-    background-color: #4caf50;
-    color: white;
-    border-color: #388e3c;
-  }
-  
-  input[type="range"] {
-    width: 80%;
-    margin: 10px auto;
-  }
-  
-  /* Game mode buttons */
+  .size-options,
+  .time-buttons,
   .mode-buttons {
     display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 30px;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
   }
   
-  .mode-btn {
+  .size-btn,
+  .time-btn,
+  .mode-btn,
+  .play-again-btn,
+  .button {
     background-color: #388e3c;
     color: white;
     border: none;
-    border-radius: 10px;
-    padding: 18px 30px;
-    font-size: 1.2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    padding: 15px 20px;
     cursor: pointer;
-    transition: 0.3s;
+    transition: background 0.3s ease;
+    width: 200px;
+    text-decoration: none;
+    text-align: center;
   }
   
-  .mode-btn:hover {
+  .size-btn:hover,
+  .time-btn:hover,
+  .mode-btn:hover,
+  .play-again-btn:hover,
+  .button:hover {
     background-color: #2e7d32;
   }
   
-
-.cell {
+  .selected {
+    background-color: #2e7d32 !important;
+    border: 2px solid #1b5e20;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin: 30px auto;
+    max-width: 600px;
+  }
+  
+  .cell {
+    background-color: white;
+    padding: 20px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    background: white;
-    border: 2px solid #ccc;
-    border-radius: 10px;
-    padding: 15px;
-    min-height: 140px;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  
-  .cell:hover {
-    background-color: #f5f5f5;
   }
   
   .cell.collected {
     background-color: #66bb6a;
     color: white;
-    border-color: #388e3c;
     text-decoration: line-through;
+    border-color: #388e3c;
   }
   
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 20px;
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 0 20px;
-  }
-  
-  .play-again-btn {
-    display: inline-block;
-    margin-top: 30px;
-    padding: 15px 30px;
-    background-color: #388e3c;
-    color: white;
-    font-size: 1.2rem;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: background 0.3s;
-  }
-  
-  .play-again-btn:hover {
-    background-color: #2e7d32;
-  }
-
   .icon {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    margin-bottom: 10px;
+    max-width: 50px;
+    margin-bottom: 8px;
   }
-
-  .label {
-    font-size: 0.95rem;
-    text-align: center;
+  
+  .slider {
+    width: 250px;
+    margin-top: 10px;
   }
+  
+  /* 🔥 Mobile-friendly tweaks */
+  @media (max-width: 600px) {
+    body {
+      padding: 20px;
+      font-size: 16px;
+    }
+  
+    h1 {
+      font-size: 1.8rem;
+    }
+  
+    .size-btn,
+    .time-btn,
+    .mode-btn,
+    .play-again-btn,
+    .button {
+      width: 100%;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      padding: 12px;
+    }
+  
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+  
+    .icon {
+      max-width: 40px;
+    }
+  }
+  
   

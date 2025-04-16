@@ -29,9 +29,27 @@ class Game(db.Model):
     items = db.Column(db.Text)
 
 TRASH_ITEMS = [
-    "Plastic Bottle", "Soda Can", "Fast Food Wrapper", "Plastic Bag", "Coffee Cup",
-    "Face Mask", "Chip Bag", "Candy Wrapper", "Straw", "Napkin", "Receipt", "Foam Cup",
-    "Snack Bar Wrapper", "Bottle Cap", "Glove", "Paper Bag"
+    "bottle_cap",
+    "broken_glass",
+    "candy_wrapper",
+    "cardboard",
+    "chip_bag",
+    "chopsticks",
+    "cigarette",
+    "clothing_item",
+    "coffee_cup",
+    "default",
+    "face_mask",
+    "fast_food_wrapper",
+    "flyer",
+    "food_container",
+    "napkin",
+    "paper_bag",
+    "plastic_bag",
+    "plastic_bottle",
+    "receipt",
+    "soda_can",
+    "straw"
 ]
 
 with flask_app.app_context():
