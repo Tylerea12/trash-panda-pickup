@@ -87,20 +87,35 @@
   });
 
   setTimeout(() => {
-    fetch(`/api/player/${playerName}`)
-      .then(res => res.json())
-      .then(data => {
-        document.body.innerHTML = `
-          <h1 style="margin-top:100px;">🎉 Congratulations! You are now a certified Trash Panda!</h1>
-          <p><strong>${data.username}</strong></p>
-          <div style="margin: 20px 0;">
-            🏆 Wins: <strong>${data.wins}</strong><br>
-            💥 Losses: <strong>${data.losses}</strong>
-          </div>
-          <a href="/" class="play-again-btn">🔁 Play Again</a>
-        `;
-      });
-  }, confettiDuration + 300);
+  fetch(`/api/player/${playerName}`)
+    .then(res => res.json())
+    .then(data => {
+      fetch(`/api/player/${playerName}/item-stats`)
+        .then(res => res.json())
+        .then(itemStats => {
+          const statsTable = Object.entries(itemStats).map(([item, count]) =>
+            `<tr><td>${item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${count}</td></tr>`
+          ).join("");
+
+          document.body.innerHTML = `
+            <h1 style="margin-top:100px;">🎉 Congratulations! You are now a certified Trash Panda!</h1>
+            <p><strong>${data.username}</strong></p>
+            <div style="margin: 20px 0;">
+              🏆 Wins: <strong>${data.wins}</strong><br>
+              💥 Losses: <strong>${data.losses}</strong>
+            </div>
+
+            <h3>🗃️ Trash Collected Over Time</h3>
+            <table style="margin: 0 auto; border-collapse: collapse;">
+              <thead><tr><th style="padding: 6px;">Item</th><th style="padding: 6px;">Count</th></tr></thead>
+              <tbody>${statsTable}</tbody>
+            </table>
+
+            <a href="/" class="play-again-btn">🔁 Play Again</a>
+          `;
+        });
+    });
+}, confettiDuration + 300);
 }
 
     socket.emit('join_room', { room: roomId });

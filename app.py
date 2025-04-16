@@ -135,6 +135,19 @@ def report_items():
     db.session.commit()
     return jsonify({"status": "ok"})
 
+@flask_app.route('/api/player/<username>/item-stats')
+def item_stats(username):
+    player = Player.query.filter_by(username=username).first()
+    if not player:
+        return jsonify({"error": "Player not found"}), 404
+
+    stats = {}
+    for pickup in player.pickups:
+        stats[pickup.item] = pickup.count
+
+    return jsonify(stats)
+    
+
 @socketio.on('join_room')
 def handle_join(data):
     join_room(data['room'])
