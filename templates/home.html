@@ -9,14 +9,23 @@
 </head>
 <body>
   <h1>Welcome to Trash Panda Pickup</h1>
+
+  <p>
+    <strong>Logged in as:</strong> {{ username }} |
+    <a href="/logout">Log out</a>
+  </p>  
+
   <p>
     This game was designed to challenge everyone to pick up trash within their community. Whether you want to play a solo game or challenge a friend, pick up all the items listed and discard them before time runs out to become an official TRASH PANDA! 🦝
   </p>
   <form method="get" id="gameForm">
-    <div class="section">
+
+<!--    <div class="section">
       <label for="username"><strong>Enter Your Trash Panda Name:</strong></label><br>
       <input type="text" id="username" name="username" required placeholder="e.g. RaccoonRandy" style="padding:10px; margin:10px 0; border-radius:6px; border:1px solid #ccc; width: 250px;"><br><br>
-    </div>
+    </div>  
+    -->
+
     <input type="hidden" name="size" id="selectedSize" value="medium">
     <input type="hidden" name="time" id="selectedTime" value="300">
     <div class="section">
@@ -52,8 +61,8 @@
         and whoever collects the most (or finishes first) within the time limit wins the game!
       </p>
       <div class="mode-buttons">
-        <button formaction="/start-game" class="mode-btn">Challenge Yourself</button>
-        <button formaction="/start-game?mode=friend" class="mode-btn">Challenge a Friend!</button>
+        <button formaction="/solo-game" class="mode-btn">Challenge Yourself</button>
+        <button formaction="/create-room" class="mode-btn">Challenge a Friend!</button>
       </div>
     </div>
   </form>

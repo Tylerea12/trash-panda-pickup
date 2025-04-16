@@ -32,6 +32,9 @@
 
   <script>
     const socket = io();
+
+ //   socket.emit('join_room', { room: "{{ game_id }}", username: "{{ username }}" });
+
     const roomId = "{{ game_id }}";
     const playerName = "{{ username }}";
     const totalTime = {{ time }};
@@ -98,49 +101,57 @@
           ).join("");
 
           document.body.innerHTML = `
-            <h1 style="margin-top:100px;">🎉 Congratulations! You are now a certified Trash Panda!</h1>
-            <p><strong>${data.username}</strong></p>
-            <div style="margin: 20px 0;">
-              🏆 Wins: <strong>${data.wins}</strong><br>
-              💥 Losses: <strong>${data.losses}</strong>
-            </div>
+  <div style="text-align: center; padding: 60px 20px;">
+    <h1 style="margin-bottom: 20px;">🎉 Congratulations! You are now a certified Trash Panda!</h1>
+    <p><strong>${data.username}</strong></p>
+    <div style="margin: 30px auto; font-size: 1.2rem;">
+      <p>🏆 Wins: <strong>${data.wins}</strong></p>
+      <p>💥 Losses: <strong>${data.losses}</strong></p>
+    </div>
 
-            <h3>🗃️ Trash Collected Over Time</h3>
-            <table style="margin: 0 auto; border-collapse: collapse;">
-              <thead><tr><th style="padding: 6px;">Item</th><th style="padding: 6px;">Count</th></tr></thead>
-              <tbody>${statsTable}</tbody>
-            </table>
+    <h3 style="margin-top: 40px;">🗃️ Trash Collected Over Time</h3>
+    <table style="margin: 0 auto; border-collapse: collapse; width: fit-content;">
+      <thead>
+        <tr>
+          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Item</th>
+          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Count</th>
+        </tr>
+      </thead>
+      <tbody>${statsTable}</tbody>
+    </table>
 
-            <a href="/" class="play-again-btn">🔁 Play Again</a>
-          `;
+    <a href="/" class="play-again-btn" style="display:inline-block; margin-top: 40px;">🔁 Play Again</a>
+  </div>
+`;
+
         });
     });
 }, confettiDuration + 300);
 }
 
-    socket.emit('join_room', { room: roomId });
 
-    socket.on('opponent_lost', () => {
-      if (!gameEnded) {
-        gameEnded = true;
-        clearInterval(timer);
-        document.getElementById("loseSound").play();
+socket.on('opponent_lost', () => {
+  if (!gameEnded) {
+    gameEnded = true;
+    clearInterval(timer);
+    document.getElementById("loseSound").play();
 
-        fetch(`/api/player/${playerName}`)
-          .then(res => res.json())
-          .then(data => {
-            document.body.innerHTML = `
-              <h1 style="margin-top:100px;">😢 You Lost!</h1>
-              <p><strong>${data.username}</strong></p>
-              <div style="margin: 20px 0;">
-                🏆 Wins: <strong>${data.wins}</strong><br>
-                💥 Losses: <strong>${data.losses}</strong>
-              </div>
-              <a href="/" class="play-again-btn">🔁 Try Again</a>
-            `;
-          });
-      }
-    });
+    fetch(`/api/player/${playerName}`)
+      .then(res => res.json())
+      .then(data => {
+        document.body.innerHTML = `
+          <h1 style="margin-top:100px;">😢 You Lost!</h1>
+          <p><strong>${data.username}</strong></p>
+          <div style="margin: 20px 0;">
+            🏆 Wins: <strong>${data.wins}</strong><br>
+            💥 Losses: <strong>${data.losses}</strong>
+          </div>
+          <a href="/" class="play-again-btn">🔁 Try Again</a>
+        `;
+      });
+  }
+});
+
 
     if (totalTime > 0) {
   let endTime;

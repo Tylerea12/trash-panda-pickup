@@ -1,0 +1,45 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Trash Panda Pickup</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    body {
+      text-align: center;
+      padding: 50px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 250px;
+      font-size: 1.1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1.1rem;
+      margin-top: 20px;
+      border: none;
+      border-radius: 6px;
+      background-color: #2e7d32;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+    <h1>🦝 Welcome to Trash Panda Pickup</h1>
+    <p style="max-width: 500px; margin: 0 auto 30px;">
+      Trash Panda Pickup is a scavenger-style game where you compete with friends or challenge yourself to clean up your community by finding and logging real-world trash items.
+      Log in to start your mission and track your progress as an official Trash Panda!
+    </p>
+
+  <form method="POST" action="/login">
+    <input type="text" name="username" required placeholder="e.g. RaccoonRandy">
+    <br>
+    <button type="submit">Start Cleaning</button>
+  </form>
+</body>
+</html>

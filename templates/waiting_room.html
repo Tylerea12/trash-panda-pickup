@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Waiting Room - Trash Panda Pickup</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 60px;
+    }
+    input {
+      padding: 10px;
+      width: 280px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #388e3c;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🦝 Waiting for Your Friend</h1>
+  <p>Send them this link to join:</p>
+  <input type="text" id="roomLink" readonly value="{{ invite_url }}">
+  <br>
+  <button onclick="copyLink()">📋 Copy Link</button>
+  <div id="copyMessage" style="color: green; font-size: 0.95rem; margin-top: 5px; display: none;">
+    ✅ Link copied!
+  </div>
+
+  <div id="status">Waiting for another player to join...</div>
+
+  <script>
+    const socket = io();
+  
+    socket.on("connect", () => {
+      // Emit after connection is ready
+      socket.emit("join_room", {
+        room: "{{ room_id }}",
+        username: "{{ username }}"
+      });
+    });
+  
+    socket.on("waiting", () => {
+      document.getElementById("status").textContent = "Waiting for another player to join...";
+    });
+  
+    socket.on("start_game", () => {
+      document.getElementById("status").textContent = "Friend joined! Starting game...";
+      setTimeout(() => {
+        window.location.href = `/play/{{ room_id }}`;
+      }, 1500);
+    });
+  
+    function copyLink() {
+      const input = document.getElementById("roomLink");
+      input.select();
+      document.execCommand("copy");
+  
+      const msg = document.getElementById("copyMessage");
+      msg.style.display = "block";
+      setTimeout(() => {
+        msg.style.display = "none";
+      }, 2000);
+    }
+  </script>
+  
+</body>
+</html>
