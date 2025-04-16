@@ -20,7 +20,8 @@
       <div class="cell">
         <img src="{{ url_for('static', filename='icons/' + icon_filename) }}" alt="{{ item }}" class="icon"
              onerror="this.onerror=null; this.src='{{ url_for('static', filename='icons/default.png') }}';">
-        <div class="label">{{ item }}</div>
+        <div class="label">{{ item.replace('_', ' ').title() }}
+        </div>
       </div>
     {% endfor %}
   </div>
