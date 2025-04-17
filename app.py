@@ -48,7 +48,7 @@ class Game(db.Model):
     winner_id = db.Column(db.Integer, nullable=True)
     items = db.Column(db.Text)
     time = db.Column(db.Integer, default=300)  # ⬅️ Add this line
-    game_start = db.Column(db.DateTime, default=datetime.utcnow)
+   # game_start = db.Column(db.DateTime, default=datetime.utcnow) 
 
 class ItemPickup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -130,9 +130,9 @@ def play_game(game_id):
             return "Room not found", 404
         items = game_data["items"]
         time = game_data["time"]
-        game_start = int(game.game_start.timestamp() * 1000)
+       # game_start = int(game.game_start.timestamp() * 1000)
 
-    return render_template("index.html", items=items, time=time, game_id=game_id, username=session['username'], game_start=game_start)
+    return render_template("index.html", items=items, time=time, game_id=game_id, username=session['username'])
 
 
 @flask_app.route('/create-room')
@@ -151,7 +151,7 @@ def create_room():
 
     if IS_PRODUCTION:
         player = Player.query.filter_by(username=session["username"]).first()
-        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time, game_start=datetime.utcnow())
+        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time,)
         db.session.add(game)
         db.session.commit()
     else:
