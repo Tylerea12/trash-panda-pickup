@@ -356,5 +356,5 @@ def handle_win(data):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    socketio.run(app, host="0.0.0.0", port=port)
+    socketio.run(flask_app, host="0.0.0.0", port=port)
 
