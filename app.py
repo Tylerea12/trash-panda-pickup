@@ -21,16 +21,6 @@ flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 socketio = SocketIO(flask_app, cors_allowed_origins="*")
 db = SQLAlchemy(flask_app)
 
-with flask_app.app_context():
-    if not IS_PRODUCTION:
-        db.drop_all()
-        db.create_all()
-        print("🧹 Dropped and recreated all tables (LOCAL DEV ONLY)")
-    else:
-        db.drop_all()
-        db.create_all()
-        print("📦 Recreated DB in production with fresh schema")
-
 
 ROOMS = {}
 
@@ -332,15 +322,6 @@ def handle_win(data):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-
-    if IS_PRODUCTION:
-        with flask_app.app_context():
-            db.create_all()
-    else:
-        with flask_app.app_context():
-            db.drop_all()
-            db.create_all()
-            print("🧹 Dropped and recreated all tables (LOCAL DEV ONLY)")
 
     socketio.run(flask_app, host="0.0.0.0", port=port)
 
