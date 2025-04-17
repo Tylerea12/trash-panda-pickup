@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Login - Trash Panda Pickup</title>
+  <title>Register - Trash Panda Pickup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { text-align: center; padding: 40px 20px; font-family: Arial; }
@@ -15,24 +15,23 @@
       display: block;
       border-radius: 8px;
     }
-    button { background: #2e7d32; color: white; border: none; }
+    button { background: #1565c0; color: white; border: none; }
     .error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>🦝 Log in to Trash Panda Pickup</h1>
+  <h1>🦝 Sign Up for Trash Panda Pickup</h1>
 
   {% if error %}
     <div class="error">{{ error }}</div>
   {% endif %}
 
   <form method="POST">
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit">Log In</button>
+    <input type="text" name="username" placeholder="Choose a username" required>
+    <input type="password" name="password" placeholder="Choose a password" required>
+    <button type="submit">Create Account</button>
   </form>
 
-  <p>Don’t have an account? <a href="/register">Sign up here</a></p>
+  <p>Already have an account? <a href="/login">Log in</a></p>
 </body>
 </html>

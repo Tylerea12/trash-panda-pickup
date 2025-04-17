@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_socketio import SocketIO, emit, join_room
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 import random
 import os
@@ -35,30 +36,40 @@ TRASH_ITEMS = [
 ]
 
 # Models
-class Player(db.Model):
-    __tablename__ = 'player'  # ✅ Add this line
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True)
-    wins = db.Column(db.Integer, default=0)
-    losses = db.Column(db.Integer, default=0)
-
 
 class Game(db.Model):
     id = db.Column(db.String, primary_key=True)
-    player1_id = db.Column(db.Integer, db.ForeignKey('player.id', name='fk_game_player1'))
-    player2_id = db.Column(db.Integer, db.ForeignKey('player.id', name='fk_game_player2'), nullable=True)
-    winner_id = db.Column(db.Integer, db.ForeignKey('player.id', name='fk_game_winner'), nullable=True)
+    player1_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_game_player1'))
+    player2_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_game_player2'), nullable=True)
+    winner_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_game_winner'), nullable=True)
     items = db.Column(db.String)
     time = db.Column(db.Integer)
     game_start = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ItemPickup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     item = db.Column(db.String(50))
     count = db.Column(db.Integer, default=0)
-    player = db.relationship("Player", backref="pickups")
+    player = db.relationship("User", backref="pickups")
+
+
+# Updated User model (replaces Player)
+class User(db.Model):
+    __tablename__ = 'user'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    wins = db.Column(db.Integer, default=0)
+    losses = db.Column(db.Integer, default=0)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
 
 with flask_app.app_context():
     db.create_all()
@@ -70,6 +81,48 @@ def home():
 
     return render_template('home.html', username=session['username'])
 
+@flask_app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        password = request.form["password"]
+
+        if User.query.filter_by(username=username).first():
+            return render_template("register.html", error="Username already taken.")
+
+        user = User(username=username)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        session["username"] = username
+        return redirect(url_for("home"))
+
+    return render_template("register.html")
+
+
+@flask_app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        password = request.form["password"]
+
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session["username"] = username
+            next_page = request.form.get("next") or url_for("home")
+            return redirect(next_page)
+
+        return render_template("login.html", error="Invalid username or password.")
+
+    return render_template("login.html")
+
+@flask_app.before_request
+def protect_routes():
+    protected_routes = ["/solo-game", "/create-room", "/stats"]
+    if any(request.path.startswith(p) for p in protected_routes):
+        if "username" not in session:
+            return redirect(url_for("login", next=request.path))
+
 @flask_app.route("/accept-invite/<room_id>")
 def accept_invite(room_id):
     if "username" not in session:
@@ -78,32 +131,6 @@ def accept_invite(room_id):
 
     # User is logged in → send them to the real waiting room
     return redirect(url_for("challenge_friend", room_id=room_id))
-
-
-@flask_app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"].strip()
-        if not username:
-            return render_template("login.html", error="Please enter a username.")
-
-        # Create user if not exists
-        player = Player.query.filter_by(username=username).first()
-        if not player:
-            player = Player(username=username)
-            db.session.add(player)
-            db.session.commit()
-
-        session["username"] = username
-
-        # 👇 Redirect to previous page if coming from invite
-        next_page = request.args.get("next")
-        if next_page:
-            return redirect(next_page)
-
-        return redirect(url_for("home"))
-
-    return render_template("login.html")
 
 
 @flask_app.route('/logout')
@@ -117,11 +144,9 @@ def start_game():
     if not username:
         return "Username is required", 400
 
-    player = Player.query.filter_by(username=username).first()
-    if not player:
-        player = Player(username=username)
-        db.session.add(player)
-        db.session.commit()
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return "User not found", 404
 
     size = request.args.get('size', 'medium')
     time_str = request.args.get('time', '300')
@@ -132,7 +157,7 @@ def start_game():
     selected_items = random.sample(TRASH_ITEMS, item_count)
 
     game_id = str(uuid.uuid4())
-    game = Game(id=game_id, player1_id=player.id, items=','.join(selected_items))
+    game = Game(id=game_id, player1_id=user.id, items=','.join(selected_items))
     db.session.add(game)
     db.session.commit()
 
@@ -174,7 +199,6 @@ def create_room():
     if "username" not in session:
         return redirect(url_for("login", next=request.path))
 
-
     room_id = uuid.uuid4().hex[:6]
     session['room_id'] = room_id
 
@@ -185,12 +209,17 @@ def create_room():
     selected_items = random.sample(TRASH_ITEMS, item_count)
 
     if IS_PRODUCTION:
-        player = Player.query.filter_by(username=session["username"]).first()
-        if not player:
+        user = User.query.filter_by(username=session["username"]).first()
+        if not user:
             return redirect(url_for("login", next=request.path))
 
-
-        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time, game_start=datetime.utcnow())
+        game = Game(
+            id=room_id,
+            player1_id=user.id,
+            items=','.join(selected_items),
+            time=time,
+            game_start=datetime.utcnow()
+        )
         db.session.add(game)
         db.session.commit()
 
@@ -212,13 +241,13 @@ def join_room_view(room_id):
 
 @flask_app.route('/api/player/<username>')
 def api_player_stats(username):
-    player = Player.query.filter_by(username=username).first()
-    if not player:
-        return jsonify({'error': 'Player not found'}), 404
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     return jsonify({
-        'username': player.username,
-        'wins': player.wins,
-        'losses': player.losses
+        'username': user.username,
+        'wins': user.wins,
+        'losses': user.losses
     })
 
 @flask_app.route('/solo-game')
@@ -240,15 +269,12 @@ def challenge_friend():
     room_id = request.args.get("room_id")
 
     if not room_id:
-        # Player 1 starts the game
         room_id = uuid.uuid4().hex[:6]
         invite_url = url_for('accept_invite', room_id=room_id, _external=True)
         return render_template("waiting_room.html", room_id=room_id, invite_url=invite_url, username=username, is_host=True)
 
-    # Player 2 joins with the link
     invite_url = url_for('accept_invite', room_id=room_id, _external=True)
     return render_template("waiting_room.html", room_id=room_id, invite_url=invite_url, username=username, is_host=False)
-
 
 
 @flask_app.route('/api/report-items', methods=['POST'])
@@ -257,16 +283,16 @@ def report_items():
     username = data.get("username")
     items = data.get("items", [])
 
-    player = Player.query.filter_by(username=username).first()
-    if not player:
-        return jsonify({"error": "Player not found"}), 404
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
     for item in items:
-        record = ItemPickup.query.filter_by(player_id=player.id, item=item).first()
+        record = ItemPickup.query.filter_by(player_id=user.id, item=item).first()
         if record:
             record.count += 1
         else:
-            record = ItemPickup(player_id=player.id, item=item, count=1)
+            record = ItemPickup(player_id=user.id, item=item, count=1)
             db.session.add(record)
 
     db.session.commit()
@@ -274,11 +300,11 @@ def report_items():
 
 @flask_app.route('/api/player/<username>/item-stats')
 def item_stats(username):
-    player = Player.query.filter_by(username=username).first()
-    if not player:
-        return jsonify({"error": "Player not found"}), 404
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-    stats = {pickup.item: pickup.count for pickup in player.pickups}
+    stats = {pickup.item: pickup.count for pickup in user.pickups}
     return jsonify(stats)
 
 ROOM_CONNECTIONS = {}  # tracks how many people are in each room
@@ -297,7 +323,6 @@ def handle_join(data):
     else:
         emit('waiting', {}, room=room)
 
-
 @socketio.on('player_won')
 def handle_win(data):
     room = data.get('room')
@@ -309,7 +334,7 @@ def handle_win(data):
     if not game:
         return
 
-    winner = Player.query.filter_by(username=username).first()
+    winner = User.query.filter_by(username=username).first()
     if not winner:
         return
 
@@ -317,11 +342,11 @@ def handle_win(data):
     winner.wins += 1
 
     if game.player1_id != winner.id and game.player1_id:
-        opponent = Player.query.get(game.player1_id)
+        opponent = User.query.get(game.player1_id)
         if opponent:
             opponent.losses += 1
     elif game.player2_id != winner.id and game.player2_id:
-        opponent = Player.query.get(game.player2_id)
+        opponent = User.query.get(game.player2_id)
         if opponent:
             opponent.losses += 1
 
@@ -331,6 +356,5 @@ def handle_win(data):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-
-    socketio.run(flask_app, host="0.0.0.0", port=port)
+    socketio.run(app, host="0.0.0.0", port=port)
 
