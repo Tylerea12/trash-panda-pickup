@@ -6,6 +6,11 @@ import uuid
 import random
 import os
 
+with flask_app.app_context():
+    db.drop_all()
+    db.create_all()
+    print("🧹 Dropped and recreated all tables")
+
 # Flag for local vs production mode
 IS_PRODUCTION = os.environ.get("RENDER", False)
 
