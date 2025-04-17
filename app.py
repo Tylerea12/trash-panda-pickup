@@ -126,7 +126,7 @@ def play_game(game_id):
         time = game_data["time"]
         game_start = int(game.game_start.timestamp() * 1000)
 
-    return render_template("index.html", items=items, time=time, game_id=game_id, username=session['username'], , game_start=game_start)
+    return render_template("index.html", items=items, time=time, game_id=game_id, username=session['username'], game_start=game_start)
 
 
 @flask_app.route('/create-room')
