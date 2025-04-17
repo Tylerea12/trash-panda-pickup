@@ -166,32 +166,36 @@ socket.on('opponent_lost', () => {
     sessionStorage.setItem("endTime", endTime);
   }
 
-  const countdownEl = document.createElement("div");
-  countdownEl.id = "timeCountdown";
-  countdownEl.style.margin = "20px auto";
-  countdownEl.style.fontSize = "1.5rem";
-  document.body.insertBefore(countdownEl, document.querySelector(".grid"));
+  const gameStart = {{ game_start }};  // This is passed from Flask
+const endTime = gameStart + totalTime * 1000;
 
-  function updateTimer() {
-    const timeLeft = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    countdownEl.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+const countdownEl = document.createElement("div");
+countdownEl.id = "timeCountdown";
+countdownEl.style.margin = "20px auto";
+countdownEl.style.fontSize = "1.5rem";
+document.body.insertBefore(countdownEl, document.querySelector(".grid"));
 
-    if (timeLeft <= 0 && !gameEnded) {
-      clearInterval(timerInterval);
-      gameEnded = true;
-      document.getElementById("loseSound").play();
-      document.body.innerHTML = `
-        <h1 style="margin-top:100px;">⏰ Time's Up! Better luck next time!</h1>
-        <a href="/" class="play-again-btn">🔁 Try Again</a>
-      `;
-      sessionStorage.clear(); // clear for next game
-    }
+function updateTimer() {
+  const now = Date.now();
+  const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  countdownEl.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+  if (timeLeft <= 0 && !gameEnded) {
+    clearInterval(timerInterval);
+    gameEnded = true;
+    document.getElementById("loseSound").play();
+    document.body.innerHTML = `
+      <h1 style="margin-top:100px;">⏰ Time's Up! Better luck next time!</h1>
+      <a href="/" class="play-again-btn">🔁 Try Again</a>
+    `;
   }
+}
 
-  updateTimer();
-  const timerInterval = setInterval(updateTimer, 1000);
+updateTimer();
+const timerInterval = setInterval(updateTimer, 1000);
+
 }
 
   </script>
