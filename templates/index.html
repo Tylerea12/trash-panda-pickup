@@ -37,7 +37,7 @@
     const roomId = "{{ game_id }}";
     const playerName = "{{ username }}";
     const totalTime = {{ time }};
-    const gameStart = {{ game_start }}; // shared server start timestamp
+    const gameStart = {{ game_start or 'null' }};
   
     console.log("⏱️ Timer from server:", totalTime, "seconds");
     console.log("🕒 Game start timestamp:", gameStart);
@@ -47,7 +47,15 @@
   
     // === Shared timer calculation ===
     const now = Math.floor(Date.now() / 1000);
-    let timeLeft = Math.max(0, (gameStart + totalTime) - now);
+    let timeLeft;
+  
+    if (gameStart) {
+      // Multiplayer mode
+      timeLeft = Math.max(0, (gameStart + totalTime) - now);
+    } else {
+      // Single player mode — start counting from now
+      timeLeft = totalTime;
+    }
   
     const countdownEl = document.createElement("div");
     countdownEl.id = "timeCountdown";
@@ -183,6 +191,7 @@
       }
     });
   </script>
+  
   
 </body>
 </html>

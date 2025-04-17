@@ -144,15 +144,19 @@ def play_game(game_id):
         game = Game.query.get_or_404(game_id)
         items = game.items.split(",")
         time = game.time
-        game_start = int(game.game_start.timestamp()) if game.game_start else int(time.time())
+
+        if mode == "self":
+            game_start = datetime.utcnow().timestamp()
+        else:
+            game_start = game.game_start.timestamp() if game.game_start else datetime.utcnow().timestamp()
+
     else:
         game_data = ROOMS.get(game_id)
         if not game_data:
             return "Room not found", 404
         items = game_data["items"]
         time = game_data["time"]
-        import time as t
-        game_start = int(t.time())
+        game_start = datetime.utcnow().timestamp()
 
     return render_template(
         "index.html",
@@ -160,9 +164,8 @@ def play_game(game_id):
         time=time,
         game_id=game_id,
         username=session["username"],
-        game_start=game_start
+        game_start=int(game_start)
     )
-
 
 
 @flask_app.route('/create-room')
