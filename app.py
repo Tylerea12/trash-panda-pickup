@@ -81,7 +81,7 @@ def home():
 
     return render_template('home.html', username=session['username'])
 
-@app.route("/register", methods=["GET", "POST"])
+@flask_app.route("/register", methods=["GET", "POST"])
 def register():
     next_url = request.args.get("next")
 
