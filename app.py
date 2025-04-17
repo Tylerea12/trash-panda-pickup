@@ -39,13 +39,13 @@ class Player(db.Model):
     losses = db.Column(db.Integer, default=0)
 
 class Game(db.Model):
-    id = db.Column(db.String(36), primary_key=True)
-    player1_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
-    player2_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
-    winner_id = db.Column(db.Integer, nullable=True)
-    items = db.Column(db.Text)
-    time = db.Column(db.Integer, default=300)  # ⬅️ Add this line
-    game_start = db.Column(db.DateTime, default=datetime.utcnow)
+    id = db.Column(db.String(10), primary_key=True)
+    player1_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    player2_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    winner_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    items = db.Column(db.String)
+    time = db.Column(db.Integer)
+    game_start = db.Column(db.DateTime)  # <-- this must exist!
 
 class ItemPickup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -145,18 +145,21 @@ def play_game(game_id):
         items = game.items.split(",")
         time = game.time
 
-        if mode == "self":
-            game_start = datetime.utcnow().timestamp()
+        # If multiplayer mode, use stored game_start or default to now
+        if game.game_start:
+            game_start = int(game.game_start.timestamp())
         else:
-            game_start = game.game_start.timestamp() if game.game_start else datetime.utcnow().timestamp()
-
+            game_start = int(datetime.utcnow().timestamp())
+            game.game_start = datetime.utcnow()
+            db.session.commit()
     else:
+        # Local test mode
         game_data = ROOMS.get(game_id)
         if not game_data:
             return "Room not found", 404
         items = game_data["items"]
         time = game_data["time"]
-        game_start = datetime.utcnow().timestamp()
+        game_start = int(time.time())  # live now
 
     return render_template(
         "index.html",
@@ -164,7 +167,7 @@ def play_game(game_id):
         time=time,
         game_id=game_id,
         username=session["username"],
-        game_start=int(game_start)
+        game_start=game_start
     )
 
 
@@ -188,7 +191,7 @@ def create_room():
         if not player:
             return "Error: Logged-in user not found in the database.", 400
 
-        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time)
+        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time, game_start=datetime.utcnow())
         db.session.add(game)
         db.session.commit()
 
