@@ -45,15 +45,12 @@
     let gameEnded = false;
     let timer;
   
-    // === Shared timer calculation ===
     const now = Math.floor(Date.now() / 1000);
     let timeLeft;
   
     if (gameStart) {
-      // Multiplayer mode
       timeLeft = Math.max(0, (gameStart + totalTime) - now);
     } else {
-      // Single player mode — start counting from now
       timeLeft = totalTime;
     }
   
@@ -84,7 +81,6 @@
     updateTimer();
     timer = setInterval(updateTimer, 1000);
   
-    // === Cell click handling ===
     const cells = document.querySelectorAll('.cell');
     const popSound = document.getElementById("popSound");
   
@@ -137,9 +133,11 @@
             fetch(`/api/player/${playerName}/item-stats`)
               .then(res => res.json())
               .then(itemStats => {
-                const statsTable = Object.entries(itemStats).map(([item, count]) =>
-                  `<tr><td>${item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${count}</td></tr>`
-                ).join("");
+                const statsTable = Object.entries(itemStats)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([item, count]) =>
+                    `<tr><td>${item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${count}</td></tr>`
+                  ).join("");
   
                 document.body.innerHTML = `
                   <div style="text-align: center; padding: 60px 20px;">
@@ -178,19 +176,44 @@
         fetch(`/api/player/${playerName}`)
           .then(res => res.json())
           .then(data => {
-            document.body.innerHTML = `
-              <h1 style="margin-top:100px;">😢 You Lost!</h1>
-              <p><strong>${data.username}</strong></p>
-              <div style="margin: 20px 0;">
-                🏆 Wins: <strong>${data.wins}</strong><br>
-                💥 Losses: <strong>${data.losses}</strong>
-              </div>
-              <a href="/" class="play-again-btn">🔁 Try Again</a>
-            `;
+            fetch(`/api/player/${playerName}/item-stats`)
+              .then(res => res.json())
+              .then(itemStats => {
+                const statsTable = Object.entries(itemStats)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([item, count]) =>
+                    `<tr><td>${item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${count}</td></tr>`
+                  ).join("");
+  
+                document.body.innerHTML = `
+                  <div style="text-align: center; padding: 60px 20px;">
+                    <h1 style="margin-bottom: 20px;">😢 You Lost!</h1>
+                    <p><strong>${data.username}</strong></p>
+                    <div style="margin: 30px auto; font-size: 1.2rem;">
+                      <p>🏆 Wins: <strong>${data.wins}</strong></p>
+                      <p>💥 Losses: <strong>${data.losses}</strong></p>
+                    </div>
+  
+                    <h3 style="margin-top: 40px;">🗃️ Trash Collected Over Time</h3>
+                    <table style="margin: 0 auto; border-collapse: collapse; width: fit-content;">
+                      <thead>
+                        <tr>
+                          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Item</th>
+                          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>${statsTable}</tbody>
+                    </table>
+  
+                    <a href="/" class="play-again-btn" style="display:inline-block; margin-top: 40px;">🔁 Try Again</a>
+                  </div>
+                `;
+              });
           });
       }
     });
   </script>
+  
   
   
 </body>

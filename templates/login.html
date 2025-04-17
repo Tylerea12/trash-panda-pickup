@@ -1,46 +1,85 @@
-<!-- templates/login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Login - Trash Panda Pickup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <style>
     body {
       text-align: center;
-      padding: 50px;
+      padding: 30px 20px;
+      font-family: Arial, sans-serif;
     }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+
+    p {
+      max-width: 500px;
+      margin: 0 auto 30px;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     input[type="text"] {
-      padding: 10px;
-      width: 250px;
+      padding: 12px 14px;
+      width: 100%;
+      max-width: 300px;
       font-size: 1.1rem;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid #ccc;
+      margin-bottom: 20px;
+      box-sizing: border-box;
     }
+
     button {
-      padding: 10px 20px;
+      padding: 12px 24px;
       font-size: 1.1rem;
-      margin-top: 20px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       background-color: #2e7d32;
       color: white;
       cursor: pointer;
+      width: 100%;
+      max-width: 200px;
+    }
+
+    button:hover {
+      background-color: #256427;
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      input[type="text"],
+      button {
+        font-size: 1rem;
+        padding: 10px 14px;
+      }
     }
   </style>
 </head>
 <body>
-    <h1>🦝 Welcome to Trash Panda Pickup</h1>
-    <p style="max-width: 500px; margin: 0 auto 30px;">
-      Trash Panda Pickup is a scavenger-style game where you compete with friends or challenge yourself to clean up your community by finding and logging real-world trash items.
-      Log in to start your mission and track your progress as an official Trash Panda!
-    </p>
+  <h1>🦝 Welcome to Trash Panda Pickup</h1>
+  <p>
+    Trash Panda Pickup is a scavenger-style game where you compete with friends or challenge yourself to clean up your community by finding and logging real-world trash items. Log in to start your mission and track your progress as an official Trash Panda!
+  </p>
 
-    <form method="POST">
-        <input type="text" name="username" placeholder="Enter your Trash Panda name" required>
-        <input type="hidden" name="next" value="{{ next }}">
-        <button type="submit">Login</button>
-      </form>
-      
+  <form method="POST">
+    <input type="text" name="username" placeholder="Enter your Trash Panda name" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit">Login</button>
+  </form>
 </body>
 </html>
