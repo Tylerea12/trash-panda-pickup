@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
-from flask_socketio import SocketIO, emit, join_room
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_socketio import SocketIO, emit, join_room
 from datetime import datetime
 import uuid
 import random
@@ -18,8 +19,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 flask_app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'instance', 'pandas.db')}"
 flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-socketio = SocketIO(flask_app, cors_allowed_origins="*")
 db = SQLAlchemy(flask_app)
+migrate = Migrate(flask_app, db)
+
+socketio = SocketIO(flask_app, cors_allowed_origins="*")
 
 
 ROOMS = {}
@@ -33,19 +36,22 @@ TRASH_ITEMS = [
 
 # Models
 class Player(db.Model):
+    __tablename__ = 'player'  # ✅ Add this line
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     wins = db.Column(db.Integer, default=0)
     losses = db.Column(db.Integer, default=0)
 
+
 class Game(db.Model):
-    id = db.Column(db.String(10), primary_key=True)
-    player1_id = db.Column(db.Integer, db.ForeignKey('player.id'))
-    player2_id = db.Column(db.Integer, db.ForeignKey('player.id'))
-    winner_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    id = db.Column(db.String, primary_key=True)
+    player1_id = db.Column(db.Integer, db.ForeignKey('player.id', name='fk_game_player1'))
+    player2_id = db.Column(db.Integer, db.ForeignKey('player.id', name='fk_game_player2'), nullable=True)
+    winner_id = db.Column(db.Integer, db.ForeignKey('player.id', name='fk_game_winner'), nullable=True)
     items = db.Column(db.String)
     time = db.Column(db.Integer)
-    game_start = db.Column(db.DateTime)  # <-- this must exist!
+    game_start = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ItemPickup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -181,7 +187,8 @@ def create_room():
     if IS_PRODUCTION:
         player = Player.query.filter_by(username=session["username"]).first()
         if not player:
-            return "Error: Logged-in user not found in the database.", 400
+            return redirect(url_for("login", next=request.path))
+
 
         game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time, game_start=datetime.utcnow())
         db.session.add(game)
