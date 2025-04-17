@@ -27,8 +27,9 @@ with flask_app.app_context():
         db.create_all()
         print("🧹 Dropped and recreated all tables (LOCAL DEV ONLY)")
     else:
+        db.drop_all()
         db.create_all()
-        print("✅ Created tables if they didn't exist (PRODUCTION)")
+        print("📦 Recreated DB in production with fresh schema")
 
 
 ROOMS = {}
