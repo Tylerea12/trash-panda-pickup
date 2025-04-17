@@ -81,23 +81,28 @@ def home():
 
     return render_template('home.html', username=session['username'])
 
-@flask_app.route("/register", methods=["GET", "POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
-        username = request.form["username"].strip()
-        password = request.form["password"]
+    next_url = request.args.get("next")
 
-        if User.query.filter_by(username=username).first():
-            return render_template("register.html", error="Username already taken.")
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        existing_user = User.query.filter_by(username=username).first()
+
+        if existing_user:
+            return render_template("register.html", error="Username already taken", next=next_url)
 
         user = User(username=username)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        session["username"] = username
-        return redirect(url_for("home"))
 
-    return render_template("register.html")
+        session["username"] = user.username
+
+        return redirect(next_url or url_for("home"))
+
+    return render_template("register.html", next=next_url)
 
 
 @flask_app.route("/login", methods=["GET", "POST"])
