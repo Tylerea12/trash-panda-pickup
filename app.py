@@ -332,4 +332,16 @@ def handle_win(data):
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5050))
+    
+    if IS_PRODUCTION:
+    with flask_app.app_context():
+        try:
+            db.create_all()
+            print("✅ Production DB tables created (if needed)")
+        except Exception as e:
+            print(f"❌ Error creating DB tables in production: {e}")
+
+
+
+
     socketio.run(flask_app, host='0.0.0.0', port=port)
