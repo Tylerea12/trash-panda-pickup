@@ -38,6 +38,9 @@
     const roomId = "{{ game_id }}";
     const playerName = "{{ username }}";
     const totalTime = {{ time }};
+
+    console.log("⏱️ Timer from server:", totalTime, "seconds");
+
     let timeLeft = totalTime;
     let timer;
     let gameEnded = false;
