@@ -182,9 +182,13 @@ def create_room():
 
     if IS_PRODUCTION:
         player = Player.query.filter_by(username=session["username"]).first()
-        game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time,)
-        db.session.add(game)
-        db.session.commit()
+        if not player:
+            return "Error: Logged-in user not found in the database.", 400
+
+    game = Game(id=room_id, player1_id=player.id, items=','.join(selected_items), time=time)
+    db.session.add(game)
+    db.session.commit()
+
     else:
         ROOMS[room_id] = {
             "items": selected_items,
