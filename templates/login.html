@@ -36,10 +36,11 @@
       Log in to start your mission and track your progress as an official Trash Panda!
     </p>
 
-  <form method="POST" action="/login">
-    <input type="text" name="username" required placeholder="e.g. RaccoonRandy">
-    <br>
-    <button type="submit">Start Cleaning</button>
-  </form>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Enter your Trash Panda name" required>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit">Login</button>
+      </form>
+      
 </body>
 </html>

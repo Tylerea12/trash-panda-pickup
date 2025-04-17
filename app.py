@@ -5,6 +5,7 @@ from datetime import datetime
 import uuid
 import random
 import os
+import time
 
 
 # Flag for local vs production mode
@@ -21,9 +22,14 @@ socketio = SocketIO(flask_app, cors_allowed_origins="*")
 db = SQLAlchemy(flask_app)
 
 with flask_app.app_context():
-    db.drop_all()
-    db.create_all()
-    print("🧹 Dropped and recreated all tables")
+    if not IS_PRODUCTION:
+        db.drop_all()
+        db.create_all()
+        print("🧹 Dropped and recreated all tables (LOCAL DEV ONLY)")
+    else:
+        db.create_all()
+        print("✅ Created tables if they didn't exist (PRODUCTION)")
+
 
 ROOMS = {}
 
@@ -48,7 +54,7 @@ class Game(db.Model):
     winner_id = db.Column(db.Integer, nullable=True)
     items = db.Column(db.Text)
     time = db.Column(db.Integer, default=300)  # ⬅️ Add this line
-   # game_start = db.Column(db.DateTime, default=datetime.utcnow) 
+    game_start = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ItemPickup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,24 +68,46 @@ with flask_app.app_context():
 
 @flask_app.route('/')
 def home():
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    if "username" not in session:
+        return redirect(url_for("login", next=request.path))
+
     return render_template('home.html', username=session['username'])
 
-@flask_app.route('/login', methods=['GET', 'POST'])
+@flask_app.route("/accept-invite/<room_id>")
+def accept_invite(room_id):
+    if "username" not in session:
+        # User isn't logged in → send to login and remember where they were going
+        return redirect(url_for("login", next=f"/accept-invite/{room_id}"))
+
+    # User is logged in → send them to the real waiting room
+    return redirect(url_for("challenge_friend", room_id=room_id))
+
+
+@flask_app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form.get("username").strip()
+    if request.method == "POST":
+        username = request.form["username"].strip()
         if not username:
-            return "Please enter a username.", 400
+            return render_template("login.html", error="Please enter a username.")
+
+        # Create user if not exists
         player = Player.query.filter_by(username=username).first()
         if not player:
             player = Player(username=username)
             db.session.add(player)
             db.session.commit()
-        session['username'] = username
-        return redirect(url_for('home'))
-    return render_template('login.html')
+
+        session["username"] = username
+
+        # 👇 Redirect to previous page if coming from invite
+        next_page = request.args.get("next")
+        if next_page:
+            return redirect(next_page)
+
+        return redirect(url_for("home"))
+
+    return render_template("login.html")
+
 
 @flask_app.route('/logout')
 def logout():
@@ -116,29 +144,41 @@ def start_game():
 
 @flask_app.route('/play/<game_id>')
 def play_game(game_id):
+    if "username" not in session:
+        return redirect(url_for("login", next=request.path))
+
     mode = request.args.get("mode", "self")
 
     if IS_PRODUCTION:
         game = Game.query.get_or_404(game_id)
         items = game.items.split(",")
-        time = game.time  # <- NEW
-
-
+        time = game.time
+        game_start = int(game.game_start.timestamp()) if game.game_start else int(time.time())
     else:
         game_data = ROOMS.get(game_id)
         if not game_data:
             return "Room not found", 404
         items = game_data["items"]
         time = game_data["time"]
-       # game_start = int(game.game_start.timestamp() * 1000)
+        import time as t
+        game_start = int(t.time())
 
-    return render_template("index.html", items=items, time=time, game_id=game_id, username=session['username'])
+    return render_template(
+        "index.html",
+        items=items,
+        time=time,
+        game_id=game_id,
+        username=session["username"],
+        game_start=game_start
+    )
+
 
 
 @flask_app.route('/create-room')
 def create_room():
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    if "username" not in session:
+        return redirect(url_for("login", next=request.path))
+
 
     room_id = uuid.uuid4().hex[:6]
     session['room_id'] = room_id
@@ -164,8 +204,9 @@ def create_room():
 
 @flask_app.route('/join/<room_id>')
 def join_room_view(room_id):
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    if "username" not in session:
+        return redirect(url_for("login", next=request.path))
+
     session['room_id'] = room_id
     return redirect(url_for('play_game', game_id=room_id, mode="friend"))
 
@@ -201,11 +242,11 @@ def challenge_friend():
     if not room_id:
         # Player 1 starts the game
         room_id = uuid.uuid4().hex[:6]
-        invite_url = url_for('challenge_friend', room_id=room_id, _external=True)
+        invite_url = url_for('accept_invite', room_id=room_id, _external=True)
         return render_template("waiting_room.html", room_id=room_id, invite_url=invite_url, username=username, is_host=True)
 
     # Player 2 joins with the link
-    invite_url = url_for('challenge_friend', room_id=room_id, _external=True)
+    invite_url = url_for('accept_invite', room_id=room_id, _external=True)
     return render_template("waiting_room.html", room_id=room_id, invite_url=invite_url, username=username, is_host=False)
 
 

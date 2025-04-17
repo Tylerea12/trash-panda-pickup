@@ -32,22 +32,54 @@
 
   <script>
     const socket = io();
-
     socket.emit('join_room', { room: "{{ game_id }}", username: "{{ username }}" });
-
+  
     const roomId = "{{ game_id }}";
     const playerName = "{{ username }}";
     const totalTime = {{ time }};
-
+    const gameStart = {{ game_start }}; // shared server start timestamp
+  
     console.log("⏱️ Timer from server:", totalTime, "seconds");
-
-    let timeLeft = totalTime;
-    let timer;
+    console.log("🕒 Game start timestamp:", gameStart);
+  
     let gameEnded = false;
-
+    let timer;
+  
+    // === Shared timer calculation ===
+    const now = Math.floor(Date.now() / 1000);
+    let timeLeft = Math.max(0, (gameStart + totalTime) - now);
+  
+    const countdownEl = document.createElement("div");
+    countdownEl.id = "timeCountdown";
+    countdownEl.style.margin = "20px auto";
+    countdownEl.style.fontSize = "1.5rem";
+    document.body.insertBefore(countdownEl, document.querySelector(".grid"));
+  
+    function updateTimer() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      countdownEl.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  
+      if (timeLeft <= 0 && !gameEnded) {
+        clearInterval(timer);
+        gameEnded = true;
+        document.getElementById("loseSound").play();
+        document.body.innerHTML = `
+          <h1 style="margin-top:100px;">⏰ Time's Up! Better luck next time!</h1>
+          <a href="/" class="play-again-btn">🔁 Try Again</a>
+        `;
+      }
+  
+      timeLeft--;
+    }
+  
+    updateTimer();
+    timer = setInterval(updateTimer, 1000);
+  
+    // === Cell click handling ===
     const cells = document.querySelectorAll('.cell');
     const popSound = document.getElementById("popSound");
-
+  
     cells.forEach(cell => {
       cell.addEventListener('click', () => {
         cell.classList.toggle('collected');
@@ -60,144 +92,97 @@
         }, 10);
       });
     });
-
+  
     function endGame() {
-  if (gameEnded) return;
-  gameEnded = true;
-  clearInterval(timer);
-
-  const victorySound = document.getElementById("victorySound");
-  victorySound.currentTime = 0;
-  victorySound.play();
-
-  let confettiDuration = 2000;
-  const end = Date.now() + confettiDuration;
-
-  const confettiInterval = setInterval(() => {
-    if (Date.now() > end) clearInterval(confettiInterval);
-    confetti({ particleCount: 25, spread: 70, origin: { y: Math.random() * 0.6 } });
-  }, 150);
-
-  socket.emit('player_won', { room: roomId, username: playerName });
-
-  // 🗃️ Collect item names from .collected cells
-  const collectedItems = [...document.querySelectorAll('.cell.collected')].map(cell =>
-    cell.querySelector('.label').textContent.trim().toLowerCase().replace(/\s+/g, '_')
-  );
-
-  // 📨 Send collected item list to backend
-  fetch('/api/report-items', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: playerName, items: collectedItems })
-  });
-
-  setTimeout(() => {
-  fetch(`/api/player/${playerName}`)
-    .then(res => res.json())
-    .then(data => {
-      fetch(`/api/player/${playerName}/item-stats`)
-        .then(res => res.json())
-        .then(itemStats => {
-          const statsTable = Object.entries(itemStats).map(([item, count]) =>
-            `<tr><td>${item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${count}</td></tr>`
-          ).join("");
-
-          document.body.innerHTML = `
-  <div style="text-align: center; padding: 60px 20px;">
-    <h1 style="margin-bottom: 20px;">🎉 Congratulations! You are now a certified Trash Panda!</h1>
-    <p><strong>${data.username}</strong></p>
-    <div style="margin: 30px auto; font-size: 1.2rem;">
-      <p>🏆 Wins: <strong>${data.wins}</strong></p>
-      <p>💥 Losses: <strong>${data.losses}</strong></p>
-    </div>
-
-    <h3 style="margin-top: 40px;">🗃️ Trash Collected Over Time</h3>
-    <table style="margin: 0 auto; border-collapse: collapse; width: fit-content;">
-      <thead>
-        <tr>
-          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Item</th>
-          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Count</th>
-        </tr>
-      </thead>
-      <tbody>${statsTable}</tbody>
-    </table>
-
-    <a href="/" class="play-again-btn" style="display:inline-block; margin-top: 40px;">🔁 Play Again</a>
-  </div>
-`;
-
-        });
-    });
-}, confettiDuration + 300);
-}
-
-
-socket.on('opponent_lost', () => {
-  if (!gameEnded) {
-    gameEnded = true;
-    clearInterval(timer);
-    document.getElementById("loseSound").play();
-
-    fetch(`/api/player/${playerName}`)
-      .then(res => res.json())
-      .then(data => {
-        document.body.innerHTML = `
-          <h1 style="margin-top:100px;">😢 You Lost!</h1>
-          <p><strong>${data.username}</strong></p>
-          <div style="margin: 20px 0;">
-            🏆 Wins: <strong>${data.wins}</strong><br>
-            💥 Losses: <strong>${data.losses}</strong>
-          </div>
-          <a href="/" class="play-again-btn">🔁 Try Again</a>
-        `;
+      if (gameEnded) return;
+      gameEnded = true;
+      clearInterval(timer);
+  
+      const victorySound = document.getElementById("victorySound");
+      victorySound.currentTime = 0;
+      victorySound.play();
+  
+      let confettiDuration = 2000;
+      const end = Date.now() + confettiDuration;
+  
+      const confettiInterval = setInterval(() => {
+        if (Date.now() > end) clearInterval(confettiInterval);
+        confetti({ particleCount: 25, spread: 70, origin: { y: Math.random() * 0.6 } });
+      }, 150);
+  
+      socket.emit('player_won', { room: roomId, username: playerName });
+  
+      const collectedItems = [...document.querySelectorAll('.cell.collected')].map(cell =>
+        cell.querySelector('.label').textContent.trim().toLowerCase().replace(/\s+/g, '_')
+      );
+  
+      fetch('/api/report-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: playerName, items: collectedItems })
       });
-  }
-});
-
-
-    if (totalTime > 0) {
-  let endTime;
-
-  if (sessionStorage.getItem("endTime")) {
-    endTime = parseInt(sessionStorage.getItem("endTime"));
-  } else {
-    endTime = Date.now() + totalTime * 1000;
-    sessionStorage.setItem("endTime", endTime);
-  }
-
-  const gameStart = {{ game_start }};  // This is passed from Flask
-const endTime = gameStart + totalTime * 1000;
-
-const countdownEl = document.createElement("div");
-countdownEl.id = "timeCountdown";
-countdownEl.style.margin = "20px auto";
-countdownEl.style.fontSize = "1.5rem";
-document.body.insertBefore(countdownEl, document.querySelector(".grid"));
-
-function updateTimer() {
-  const now = Date.now();
-  const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  countdownEl.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-  if (timeLeft <= 0 && !gameEnded) {
-    clearInterval(timerInterval);
-    gameEnded = true;
-    document.getElementById("loseSound").play();
-    document.body.innerHTML = `
-      <h1 style="margin-top:100px;">⏰ Time's Up! Better luck next time!</h1>
-      <a href="/" class="play-again-btn">🔁 Try Again</a>
-    `;
-  }
-}
-
-updateTimer();
-const timerInterval = setInterval(updateTimer, 1000);
-
-}
-
+  
+      setTimeout(() => {
+        fetch(`/api/player/${playerName}`)
+          .then(res => res.json())
+          .then(data => {
+            fetch(`/api/player/${playerName}/item-stats`)
+              .then(res => res.json())
+              .then(itemStats => {
+                const statsTable = Object.entries(itemStats).map(([item, count]) =>
+                  `<tr><td>${item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${count}</td></tr>`
+                ).join("");
+  
+                document.body.innerHTML = `
+                  <div style="text-align: center; padding: 60px 20px;">
+                    <h1 style="margin-bottom: 20px;">🎉 Congratulations! You are now a certified Trash Panda!</h1>
+                    <p><strong>${data.username}</strong></p>
+                    <div style="margin: 30px auto; font-size: 1.2rem;">
+                      <p>🏆 Wins: <strong>${data.wins}</strong></p>
+                      <p>💥 Losses: <strong>${data.losses}</strong></p>
+                    </div>
+  
+                    <h3 style="margin-top: 40px;">🗃️ Trash Collected Over Time</h3>
+                    <table style="margin: 0 auto; border-collapse: collapse; width: fit-content;">
+                      <thead>
+                        <tr>
+                          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Item</th>
+                          <th style="padding: 8px 16px; border-bottom: 1px solid #ccc;">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>${statsTable}</tbody>
+                    </table>
+  
+                    <a href="/" class="play-again-btn" style="display:inline-block; margin-top: 40px;">🔁 Play Again</a>
+                  </div>
+                `;
+              });
+          });
+      }, confettiDuration + 300);
+    }
+  
+    socket.on('opponent_lost', () => {
+      if (!gameEnded) {
+        gameEnded = true;
+        clearInterval(timer);
+        document.getElementById("loseSound").play();
+  
+        fetch(`/api/player/${playerName}`)
+          .then(res => res.json())
+          .then(data => {
+            document.body.innerHTML = `
+              <h1 style="margin-top:100px;">😢 You Lost!</h1>
+              <p><strong>${data.username}</strong></p>
+              <div style="margin: 20px 0;">
+                🏆 Wins: <strong>${data.wins}</strong><br>
+                💥 Losses: <strong>${data.losses}</strong>
+              </div>
+              <a href="/" class="play-again-btn">🔁 Try Again</a>
+            `;
+          });
+      }
+    });
   </script>
+  
 </body>
 </html>
