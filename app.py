@@ -330,18 +330,17 @@ def handle_win(data):
     print(f"🏁 {data['username']} WON in room {data['room']}")
     emit('opponent_lost', {}, room=data['room'], include_self=False)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    
+
     if IS_PRODUCTION:
-    with flask_app.app_context():
-        try:
+        with flask_app.app_context():
             db.create_all()
-            print("✅ Production DB tables created (if needed)")
-        except Exception as e:
-            print(f"❌ Error creating DB tables in production: {e}")
+    else:
+        with flask_app.app_context():
+            db.drop_all()
+            db.create_all()
+            print("🧹 Dropped and recreated all tables (LOCAL DEV ONLY)")
 
+    socketio.run(flask_app, host="0.0.0.0", port=port)
 
-
-
-    socketio.run(flask_app, host='0.0.0.0', port=port)
