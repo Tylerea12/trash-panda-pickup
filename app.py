@@ -143,28 +143,20 @@ def play_game(game_id):
     if IS_PRODUCTION:
         game = Game.query.get_or_404(game_id)
         items = game.items.split(",")
-        time = game.time
-
-        # If multiplayer mode, use stored game_start or default to now
-        if game.game_start:
-            game_start = int(game.game_start.timestamp())
-        else:
-            game_start = int(datetime.utcnow().timestamp())
-            game.game_start = datetime.utcnow()
-            db.session.commit()
+        game_time = game.time
+        game_start = int(game.game_start.timestamp()) if game.game_start else None
     else:
-        # Local test mode
         game_data = ROOMS.get(game_id)
         if not game_data:
             return "Room not found", 404
         items = game_data["items"]
-        time = game_data["time"]
-        game_start = int(time.time())  # live now
+        game_time = game_data["time"]
+        game_start = int(datetime.utcnow().timestamp())
 
     return render_template(
         "index.html",
         items=items,
-        time=time,
+        time=game_time,
         game_id=game_id,
         username=session["username"],
         game_start=game_start
